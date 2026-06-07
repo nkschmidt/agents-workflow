@@ -152,7 +152,38 @@ if [ -d "$AGENTS_DIR" ]; then
 fi
 
 # --------------------------------------------------------------------------
-# 6. Локальный OpenCode-сетап (gitignore)
+# 6. Локальные настройки Claude Code (seed once, апдейтером не затирается)
+# --------------------------------------------------------------------------
+# settings.json — общий framework-baseline (в манифесте, всегда затирается).
+# settings.local.json — локальные оверрайды юзера: создаём один раз из шаблона
+# settings.local.json.example, дальше не трогаем (файл в .gitignore).
+echo "init-project: настраиваю .claude/settings.local.json ..."
+
+LOCAL_SETTINGS="$ROOT/.claude/settings.local.json"
+EXAMPLE_SETTINGS="$ROOT/.claude/settings.local.json.example"
+if [ -f "$LOCAL_SETTINGS" ]; then
+  echo "  SKIP   $LOCAL_SETTINGS (уже существует)"
+elif [ -f "$EXAMPLE_SETTINGS" ]; then
+  cp "$EXAMPLE_SETTINGS" "$LOCAL_SETTINGS"
+  echo "  CREATE $LOCAL_SETTINGS (из settings.local.json.example)"
+else
+  echo "  WARN: $EXAMPLE_SETTINGS не найден — пропускаю seed локальных настроек" >&2
+fi
+
+# Гарантировать, что локальный файл настроек игнорируется в проекте.
+# Проектный .gitignore не framework-owned (нет в манифесте) → правим его здесь,
+# иначе settings.local.json с bypassPermissions может случайно попасть в репо проекта.
+GITIGNORE="$ROOT/.gitignore"
+IGNORE_LINE=".claude/settings.local.json"
+if [ ! -f "$GITIGNORE" ] || ! grep -qxF "$IGNORE_LINE" "$GITIGNORE"; then
+  printf '\n# Локальные оверрайды настроек Claude Code (не коммитим)\n%s\n' "$IGNORE_LINE" >> "$GITIGNORE"
+  echo "  GITIGNORE += $IGNORE_LINE"
+else
+  echo "  SKIP   .gitignore (правило $IGNORE_LINE уже есть)"
+fi
+
+# --------------------------------------------------------------------------
+# 7. Локальный OpenCode-сетап (gitignore)
 # --------------------------------------------------------------------------
 echo "init-project: настраиваю .opencode/ ..."
 
@@ -183,7 +214,7 @@ else
 fi
 
 # --------------------------------------------------------------------------
-# 7. Регенерировать .opencode/agents/
+# 8. Регенерировать .opencode/agents/
 # --------------------------------------------------------------------------
 echo "init-project: регенерирую .opencode/agents/ ..."
 bash "$ROOT/scripts/sync-agents.sh"

@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Read", "Glob", "Grep", "Skill", "Agent", "WebFetch", "WebSearch",
+      "Write(memory/**)", "Edit(memory/**)",
+      "Write(PROJECT.md)", "Edit(PROJECT.md)",
+      "Read(/tmp/untracked.png)",
+      "Read(/tmp/diff.png)",
+      "Bash(*git diff*)",
+      "Bash(*git status*)",
+      "Bash(*git ls-files*)",
+      "Bash(*git rev-parse*)",
+      "Bash(*silicon*)",
+      "Bash(*wc*)",
+      "Bash(*xargs*)"
+    ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"Сверься с регламентом (CLAUDE.md §1-§10) и выполни pre-flight checklist (§4) перед любым действием. Без этого — нарушение регламента.\"}}'"
+          }
+        ]
+      }
+    ]
+  }
+}

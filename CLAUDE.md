@@ -288,9 +288,11 @@ Change set — это **технический документ**: конкре�
 
 **Граница владения.** Framework-owned пути перечислены в `framework.manifest`. Всё, чего там нет, — собственность проекта.
 
-- **Framework-owned** (обновляется из `agents-workflow`, в проекте **не редактируется**): `CLAUDE.md`, `framework.manifest`/`framework.version`, тулинг `scripts/*`, framework-скиллы (`pre-task-check`, `sync-submodules`, `generate-project`), `.claude/agents/`, `opencode.json`, `memory/README.md`.
+- **Framework-owned** (обновляется из `agents-workflow`, в проекте **не редактируется**): `CLAUDE.md`, `framework.manifest`/`framework.version`, тулинг `scripts/*`, framework-скиллы (`generate-project`, `study-architecture`, `add-workspace`, `pre-task-check`, `sync-submodules`), `.claude/agents/`, `.claude/settings.json` (общий baseline разрешений/хуков), `.claude/settings.local.json.example` (шаблон локальных оверрайдов), `opencode.json`, `memory/README.md`.
 - **Проектное** (апдейт **не трогает**): `PROJECT.md`, `README.md`, содержимое `memory/` кроме `memory/README.md`, проектные скиллы, рабочие области (`submodules/` и т.п.).
-- **Генерируемое:** `.opencode/agents/*.md` — из `.claude/agents/` скриптом `scripts/sync-agents.sh`; локальный OpenCode-сетап (`.opencode/package.json`, node_modules) — gitignore, ставится `init-project.sh`.
+- **Генерируемое / локальное (gitignore, апдейтер не трогает):** `.opencode/agents/*.md` — из `.claude/agents/` скриптом `scripts/sync-agents.sh`; локальный OpenCode-сетап (`.opencode/package.json`, node_modules); `.claude/settings.local.json` — локальные оверрайды разрешений/режима, сидится `init-project.sh` из `.example` один раз, дальше правится юзером и не затирается.
+
+**Настройки Claude Code — слои.** `.claude/settings.json` (framework-owned, всегда приводится к версии framework) несёт безопасный baseline: хук-сверку с регламентом + разрешения, нужные framework-скиллам. Агрессивные разрешения и режим (`Bash(*)`, `Write(**)`, `bypassPermissions`, `skipDangerousModePermissionPrompt`) живут в `.claude/settings.local.json` — он **локальный** (gitignore), правится юзером, апдейтером не трогается. Claude Code мержит оба файла, локальный имеет приоритет.
 
 **Правило неприкосновенности.** Framework-owned файлы в проекте не правим — при обновлении они приводятся к версии framework, локальные правки **затрутся**. Изменения регламента/тулинга вносятся через PR в репозиторий `agents-workflow`, затем подтягиваются. Согласование изменений регламента по §8 сохраняется.
 
@@ -299,3 +301,5 @@ Change set — это **технический документ**: конкре�
 **Старт нового проекта.** Подключить рабочие области (субмодули и т.п.), затем сказать «изучи кодовую базу» → скилл `generate-project` при необходимости поднимет каркас (`scripts/init-project.sh`: скелет `memory/`, git-remote `framework`, первый vendor) и сгенерирует `PROJECT.md` из реального кода. В самом framework `PROJECT.md` нет — он всегда генерируется под проект.
 
 Онбординг агентов (по апруву, после `PROJECT.md`): скилл `study-architecture` — профильный агент изучает архитектуру каждой области (**код — первичный источник, README могут быть устаревшими**) и пишет digest в свою память, чтобы доработки шли согласно существующим слоям и паттернам.
+
+**Добавление рабочей области в уже инициализированный проект.** Если позже подключается новый субмодуль (или для `monorepo` — новая рабочая зона), пользователь говорит «добавь сабмодуль / подключи новый репо» → скилл `add-workspace`: подключает область (`git submodule add` для `submodules`), обновляет `PROJECT.md` (логика `generate-project`, существующие строки не затираются) и запускает `study-architecture` со scope только новой области. Коммит мета-репо и памяти — по §11.9/§6. Для `single-repo` неприменим.

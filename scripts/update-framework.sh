@@ -169,5 +169,17 @@ else
   echo "WARN: scripts/sync-agents.sh не найден, пропускаю регенерацию агентов" >&2
 fi
 
+# --------------------------------------------------------------------------
+# 10. Хинт по локальным настройкам Claude Code
+# --------------------------------------------------------------------------
+# Апдейтер намеренно НЕ создаёт settings.local.json (это включило бы локальную
+# политику без явного согласия). Если файла нет — подсказать, как его завести.
+if [ -f "$ROOT/.claude/settings.local.json.example" ] && [ ! -f "$ROOT/.claude/settings.local.json" ]; then
+  echo ""
+  echo "update-framework: локальных настроек нет. Чтобы завести локальные оверрайды:"
+  echo "  cp .claude/settings.local.json.example .claude/settings.local.json"
+  echo "  (и убедитесь, что .claude/settings.local.json в .gitignore проекта)"
+fi
+
 echo ""
 echo "update-framework: готово. Проверьте изменения и закоммитьте по §11.9."
