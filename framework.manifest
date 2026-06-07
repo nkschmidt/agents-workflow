@@ -1,0 +1,24 @@
+# framework.manifest — framework-owned пути (agents-workflow).
+# update-framework.sh приводит ИМЕННО эти пути к выбранной версии framework (включая удаления).
+# Всё, чего здесь нет, — собственность проекта; апдейт это не трогает.
+# Пустые строки и строки, начинающиеся с '#', игнорируются.
+# Путь с завершающим '/' — директория (синкается рекурсивно).
+
+CLAUDE.md
+framework.manifest
+framework.version
+opencode.json
+scripts/sync-agents.sh
+scripts/project-config.sh
+scripts/update-framework.sh
+scripts/init-project.sh
+.claude/agents/
+.claude/skills/pre-task-check/
+.claude/skills/sync-submodules/
+.claude/skills/generate-project/
+.claude/skills/study-architecture/
+.claude/skills/diff-image/
+.claude/skills/start-frontend/
+.claude/skills/stop-frontend/
+memory/README.md
+.tmp/.gitignore

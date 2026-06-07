@@ -1,0 +1,5 @@
+# Локальный OpenCode-сетап и генерируемые из .claude/agents/ файлы.
+# Источник истины для агентов — .claude/agents/.
+.opencode/
+
+.DS_Store
