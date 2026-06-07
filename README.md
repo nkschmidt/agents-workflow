@@ -25,10 +25,42 @@
 
 ## Старт нового проекта
 
-1. Создать репозиторий проекта, подключить рабочие области (субмодули и т.п.).
-2. Подключить framework: `git remote add framework git@github.com:nkschmidt/agents-workflow.git`.
-3. Поднять каркас: `scripts/init-project.sh` (или просто сказать Claude «изучи кодовую базу» — скилл `generate-project` сделает это сам при необходимости).
-4. Сказать Claude «**изучи кодовую базу**» → скилл `generate-project` инспектит код и генерирует `PROJECT.md`.
+### 1. Подключить framework и вынуть бутстрап-тулинг
+
+> `git remote add framework …` только **заводит remote** — файлы framework в репозитории ещё не появляются. Их приносит `git checkout <ref> -- <пути>` из ветки/тега framework. Минимально нужны два скрипта ниже; всё остальное `init-project.sh` подтянет сам по `framework.manifest`.
+
+```bash
+git init                                # если каталог ещё не git-репозиторий
+git remote add framework git@github.com:nkschmidt/agents-workflow.git
+git fetch framework --tags
+
+# вынуть минимальный бутстрап (сам init-project + его парсер)
+git checkout framework/master -- scripts/init-project.sh scripts/project-config.sh
+```
+
+### 2. Поднять каркас
+
+```bash
+./scripts/init-project.sh
+```
+
+Идемпотентно: подтянет все framework-owned файлы по манифесту (на последний тег, напр. `v0.2.0`), создаст скелет `memory/`, сидит `.claude/settings.local.json` из `.example` и добавит его в `.gitignore`, поднимет локальный OpenCode-сетап и сгенерит `.opencode/agents/`.
+
+### 3. Подключить рабочие области
+
+Для топологии `submodules` — добавить рабочие репозитории как субмодули (конвенция пути — `submodules/<name>`):
+
+```bash
+git submodule add git@github.com:org/backend.git submodules/backend
+git submodule add git@github.com:org/infra.git   submodules/infra
+git submodule update --init --recursive
+```
+
+Для `single-repo` рабочая область — сам репозиторий, шага нет. Для `monorepo` рабочие зоны уже лежат в репо. Добавить область **позже**, когда проект уже живёт, — командой Claude «добавь сабмодуль …» (скилл `add-workspace`, см. ниже).
+
+### 4. Сгенерировать PROJECT.md
+
+Сказать Claude «**изучи кодовую базу**» → скилл `generate-project` инспектит код всех областей и генерирует `PROJECT.md` (топология, рабочие области, ветки). Затем по апруву — `study-architecture` (онбординг агентов в архитектуру).
 
 ## Добавление рабочей области в существующий проект
 
@@ -42,7 +74,24 @@
 
 ## Обновление framework в проекте
 
+Если тулинг framework уже в проекте:
+
 ```bash
-scripts/update-framework.sh           # привести framework-owned пути к свежей версии
+scripts/update-framework.sh           # к версии из framework.version
+scripts/update-framework.sh v0.2.0    # … или к конкретному тегу
 ```
-Приводит framework-часть к версии из remote `framework` (включая удаления), затем регенерирует `.opencode/agents/`. Проектные файлы не трогаются. Изменения коммитятся по правилам §11.9 регламента.
+
+Приводит framework-owned пути к выбранной версии remote `framework` (**включая удаления**), затем регенерирует `.opencode/agents/`. Проектные файлы не трогаются. Изменения коммитятся по §11.9 регламента.
+
+### Если тулинга ещё нет (или remote не подключён)
+
+Например, проект склонировали без vendored-скриптов, либо это самый первый апдейт — `update-framework.sh` сам дочитает `framework.manifest` из выбранной версии и довыгрузит остальное:
+
+```bash
+git remote add framework git@github.com:nkschmidt/agents-workflow.git   # если remote ещё нет
+git fetch framework --tags
+git checkout framework/master -- scripts/update-framework.sh
+scripts/update-framework.sh v0.2.0    # явный тег обязателен, если framework.version ещё нет
+```
+
+Актуальные теги: `git ls-remote --tags framework`.
